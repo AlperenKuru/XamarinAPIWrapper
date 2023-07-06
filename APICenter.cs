@@ -128,14 +128,63 @@ namespace Project.Views
             // ↓ You variables ↓
             var variables = new
             {
-                //şuanda tüm listeyi çekiyor charter bazlı çekmek için bunanın içerisinde "id" değeri göndermen gerekecek. id değerini kullanıcının bağlı olduğu user bilgisinden çekebilirsin
+                
             };
 
             // ↓ You in include in the query and variable ↓
             var payload = new
             {
                 query
-                // variables
+            };
+
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access_token);
+
+                var content = new StringContent(
+                    Newtonsoft.Json.JsonConvert.SerializeObject(payload),
+                    Encoding.UTF8,
+                    "application/json");
+
+                var response = await client.PostAsync("Your_Request_URL", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var jObject = JObject.Parse(responseContent);
+
+                return jObject;
+            }
+        }
+
+        //Sample RiderById API Call
+        public async Task<JObject> RiderById(string userId)
+        {
+            access_token = Preferences.Get("accessTokenKey", "");
+
+            // ↓ You Query ↓
+            var query = @"
+            query ($user_id : String!) {
+                rider_profile (filter: { user: { id: { _eq:  $user_id  } } } ) {
+                    user {
+                        id, first_name, last_name
+                    },
+                    id,
+                    rider_id,
+                    rank,
+                    nickname,
+                    blood_type,
+                }
+            }";
+
+            // ↓ You variables ↓
+            var variables = new
+            {
+                user_id = userId
+            };
+
+            // ↓ You in include in the query and variable ↓
+            var payload = new
+            {
+                query,
+                variables
             };
 
             using (var client = new HttpClient())
